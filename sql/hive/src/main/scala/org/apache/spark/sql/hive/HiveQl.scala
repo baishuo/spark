@@ -33,9 +33,13 @@ import org.apache.spark.sql.catalyst.plans.logical
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.sql.catalyst.types.decimal.Decimal
+import org.apache.spark.util.Utils
+import java.io.{FileInputStream, InputStream}
+import java.util.Properties
 
 /* Implicit conversions */
 import scala.collection.JavaConversions._
+import java.io.File
 
 /**
  * Used when we need to start parsing the AST before deciding that we are going to pass the command
@@ -237,7 +241,42 @@ private[hive] object HiveQl {
   /** Creates LogicalPlan for a given HiveQL string. */
   def createPlan(sql: String) = {
     try {
-      val tree = getAst(sql)
+      var start = "group|by"
+      var end = ""
+      var is: InputStream = null
+      val properties = new Properties()
+      val file =new File(".")
+      println("file:" + file.getAbsolutePath + "|" + file.getCanonicalPath)
+      // println(System.getProperty("java.class.path"))
+      println(Utils.getSparkClassLoader.getResource(""))
+      try {
+        is = Utils.getSparkClassLoader.getResourceAsStream("sql.properties")
+
+        if (is != null) {
+          println("not null!!!!")
+          properties.load(is)
+        }
+      } catch {
+        case e: Exception => println("exception!!!")
+      } finally {
+        if (is != null) is.close()
+      }
+      if(properties.containsKey("start")){
+        start = properties.getProperty("start");
+      }
+      if(properties.containsKey("end")){
+        end = properties.getProperty("end");
+      }
+      var tree: ASTNode = null
+      if (HiveStringTool.getIndex(sql, start)._1 > -1) {
+        val indexInfoes = HiveStringTool.getSubStr(sql, start, end)
+        val newsql = HiveStringTool.getFinalString(indexInfoes)
+        println("--newsql:" + newsql)
+        tree = getAst(newsql)
+      } else {
+        tree = getAst(sql)
+      }
+
       if (nativeCommands contains tree.getText) {
         NativeCommand(sql)
       } else {
