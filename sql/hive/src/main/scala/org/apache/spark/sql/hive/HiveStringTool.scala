@@ -273,6 +273,10 @@ object HiveStringTool {
       """
         select tc1 from (select tc1 from t1 group by cube(tc1)  left     join select tc1 from t2 group by rollup(tc1)) group by  rollup(tc1), cube(tc1), tc1
       """.stripMargin
+    val sql5 =
+      """
+        select tc1 from t1 group by  rollup(tc1), cube(tc1), tc1
+      """.stripMargin
     val end1 = "group by|limit|having|distribute to"
     val end2 = "grouP by|Limit of|having|distriBute to|left join"
     val end3 = "grouP by|Limit of|having|distriBute to|left join"
@@ -288,7 +292,7 @@ object HiveStringTool {
     // getSubStr(sql3, "group|by", end2).foreach(str => println ("str:" + str))
 
     // val aaa = getSubStr(sql2, "group|by", end2).map(new GrpParser(_).parser).foreach(str => println ("str---:" + str))
-     sql = sql4
+     sql = sql5
      end = end2
      val aaa = getSubStr(sql, "group|by", end)
      getFinalString(aaa)
